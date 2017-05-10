@@ -121,6 +121,11 @@ data AntiQuoter a = AntiQuoter
     -- if an update to some global state is needed), it is best to throw an
     -- error when 'Purity' is 'Pure' (for example "you cannot use context X with
     -- @pure@"), which will show up at compile time.
+  , aqExpander :: a -> String -> String
+    -- ^ Expands the generated C identifier, allowing for additional marshalling
+    -- tasks within the generated code. This function should be treated like
+    -- a preprocessor macro in C; for example, the resulting expression should
+    -- be wrapped in ( ).
   }
 
 -- | An identifier for a 'AntiQuoter'.
@@ -309,6 +314,7 @@ fptrAntiQuoter = AntiQuoter
       hsExp <- getHsVariable "fptrCtx" cId
       hsExp' <- [| withForeignPtr (coerce $(return hsExp)) |]
       return (hsTy, hsExp')
+  , aqExpander = const id
   }
 
 -- | This 'Context' includes a 'AntiQuoter' that removes the need for
@@ -352,6 +358,7 @@ funPtrAntiQuoter = AntiQuoter
             |]
           return (hsTy, hsExp')
         _ -> fail "The `fun' marshaller captures function pointers only"
+  , aqExpander = const id
   }
 
 -- | This 'Context' includes two 'AntiQuoter's that allow to easily use
@@ -404,6 +411,7 @@ vecPtrAntiQuoter = AntiQuoter
       hsExp <- getHsVariable "vecCtx" cId
       hsExp' <- [| vecCtxUnsafeWith $(return hsExp) |]
       return (hsTy, hsExp')
+  , aqExpander = const id
   }
 
 vecLenAntiQuoter :: AntiQuoter HaskellIdentifier
@@ -422,6 +430,7 @@ vecLenAntiQuoter = AntiQuoter
           return (hsTy, hsExp'')
         _ -> do
           fail "impossible: got type different from `long' (vecCtx)"
+  , aqExpander = const id
   }
 
 
@@ -452,6 +461,7 @@ bsPtrAntiQuoter = AntiQuoter
           return (hsTy, hsExp')
         _ ->
           fail "impossible: got type different from `char *' (bsCtx)"
+  , aqExpander = const id
   }
 
 bsLenAntiQuoter :: AntiQuoter HaskellIdentifier
@@ -470,6 +480,7 @@ bsLenAntiQuoter = AntiQuoter
           return (hsTy, hsExp'')
         _ -> do
           fail "impossible: got type different from `long' (bsCtx)"
+  , aqExpander = const id
   }
 
 -- Utils

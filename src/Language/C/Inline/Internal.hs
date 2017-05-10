@@ -491,7 +491,8 @@ parseTypedC antiQs = do
       [ do void $ Parser.try (Parser.string $ antiQId ++ ":") Parser.<?> "anti quoter id"
            (s, cTy, x) <- aqParser antiQ
            id' <- freshId s
-           return ([(id', cTy, AntiQuote antiQId (toSomeEq x))], C.unCIdentifier id')
+           let code = (aqExpander antiQ) x (C.unCIdentifier id')
+           return ([(id', cTy, AntiQuote antiQId (toSomeEq x))], code)
       | (antiQId, SomeAntiQuoter antiQ) <- Map.toList antiQs
       ]
 
